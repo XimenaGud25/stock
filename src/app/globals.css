@@ -1,0 +1,36 @@
+@import "tailwindcss";
+
+/* Paleta y tipografía de Stock Herramienta Pro (la misma del diseño en Figma) */
+@theme {
+  --color-navy: #0f1f4b;
+  --color-navy-2: #1b3a8c;
+  --color-brand: #1f4fd8;
+  --color-brand-soft: #eaf0ff;
+  --color-accent: #ffc21a;
+  --color-surface: #f5f7fa;
+  --color-line: #e4e8ef;
+  --color-ink: #101828;
+  --color-muted: #5b6474;
+  --color-dim: #8a93a3;
+  --color-ok: #12a150;
+  --color-ok-soft: #e7f6ee;
+  --color-danger: #dc2626;
+  --color-danger-soft: #fdecec;
+}
+
+/* Las fuentes las carga next/font en src/app/layout.tsx */
+@theme inline {
+  --font-sans: var(--font-inter), system-ui, sans-serif;
+  --font-display: var(--font-grotesk), var(--font-inter), sans-serif;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background: var(--color-surface);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
