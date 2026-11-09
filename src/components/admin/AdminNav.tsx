@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { ExternalLink, LayoutDashboard, LogOut, Package, ShoppingBag, Tag } from "lucide-react";
+import { BarChart3, ExternalLink, LayoutDashboard, LogOut, Package, ShoppingBag, Store, Tag } from "lucide-react";
 import { signOut } from "@/app/admin/actions";
 import { cn } from "@/lib/format";
 
@@ -11,7 +11,9 @@ export function AdminNav({ email, newOrders, lowStock }: { email: string; newOrd
   const items = [
     { href: "/admin", label: "Resumen", Icon: LayoutDashboard, count: 0 },
     { href: "/admin/productos", label: "Productos", Icon: Package, count: lowStock, warn: true },
-    { href: "/admin/pedidos", label: "Pedidos", Icon: ShoppingBag, count: newOrders },
+    { href: "/admin/pedidos", label: "Pedidos y ventas", Icon: ShoppingBag, count: newOrders },
+    { href: "/admin/ventas/nueva", label: "Venta en mostrador", Icon: Store, count: 0 },
+    { href: "/admin/reportes", label: "Reportes", Icon: BarChart3, count: 0 },
     { href: "/admin/ofertas", label: "Ofertas", Icon: Tag, count: 0 },
   ];
   const active = (href: string) => (href === "/admin" ? pathname === href : pathname.startsWith(href));

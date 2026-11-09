@@ -2,13 +2,14 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import type { OrderStatus, ProductSpec } from "@/types";
+import type { OrderStatus, PaymentMethod, PaymentStatus, ProductSpec } from "@/types";
 import { requireAdmin } from "@/lib/auth";
 import { adminDb } from "@/lib/supabase/admin";
 import { PHOTOS_BUCKET, SUPABASE_URL } from "@/lib/supabase/config";
 import { sessionDb } from "@/lib/supabase/server";
 import { productToRow, slugify } from "@/lib/db";
 import { products as sampleProducts } from "@/lib/data/products";
+import { emailNotice, notifyOrder } from "@/lib/email";
 
 export type FormState = { error?: string; ok?: string };
 
@@ -210,10 +211,75 @@ export async function saveDeal(_prev: FormState, fd: FormData): Promise<FormStat
 
 /* ------------------------------ Pedidos ----------------------------- */
 
-export async function setOrderStatus(id: number, status: OrderStatus): Promise<FormState> {
+/** Cambia el estado (o solo agrega una nota, si el estado es el mismo) y lo deja en el historial. */
+export async function setOrderStatus(id: number, status: OrderStatus, note = ""): Promise<FormState> {
   await requireAdmin();
-  const { error } = await adminDb().rpc("set_order_status", { p_order_id: id, p_status: status });
+  const db = adminDb();
+  const cleanNote = note.trim().slice(0, 500) || null;
+  const before = await db.from("orders").select("status").eq("id", id).maybeSingle<{ status: OrderStatus }>();
+  const { error } = await db.rpc("set_order_status", {
+    p_order_id: id,
+    p_status: status,
+    p_note: cleanNote,
+    p_actor: "tienda",
+  });
+  if (error) return { error: error.message };
+  // Cada cambio le llega al cliente por correo
+  const mail = await notifyOrder(id, { type: "estado", status, note: cleanNote, noteOnly: before.data?.status === status });
+  refresh();
+  return { ok: `Guardado${emailNotice(mail)}` };
+}
+
+/** Registra el pago de un pedido (o lo regresa a pendiente). method = forma real con la que se cobró. */
+export async function setPayment(id: number, status: PaymentStatus, method?: PaymentMethod): Promise<FormState> {
+  await requireAdmin();
+  const { error } = await adminDb().rpc("set_payment", {
+    p_order_id: id,
+    p_status: status,
+    p_method: method ?? null,
+    p_actor: "tienda",
+  });
+  if (error) return { error: error.message };
+  const mail = status === "pagado" ? await notifyOrder(id, { type: "pago" }) : null;
+  refresh();
+  return { ok: `Guardado${emailNotice(mail)}` };
+}
+
+/* -------------------------- Venta en mostrador ------------------------- */
+
+export type CounterSaleState = { error?: string; orderId?: number };
+const COUNTER_PAYMENTS: PaymentMethod[] = ["efectivo", "tarjeta", "transferencia"];
+
+/** Registra una venta hecha en la sucursal: descuenta stock y queda como entregada. */
+export async function createCounterSale(_prev: CounterSaleState, fd: FormData): Promise<CounterSaleState> {
+  await requireAdmin();
+  let items: { productId: string; quantity: number }[] = [];
+  try {
+    items = JSON.parse(text(fd, "items"));
+  } catch {
+    /* se valida abajo */
+  }
+  items = items.filter((i) => i.productId && Number.isInteger(i.quantity) && i.quantity > 0);
+  if (!items.length) return { error: "Agrega al menos un producto." };
+
+  const phone = text(fd, "phone").replace(/\D/g, "");
+  if (phone && phone.length !== 10) return { error: "El teléfono debe tener 10 dígitos (o déjalo vacío)." };
+  const payment = text(fd, "payment") as PaymentMethod;
+  if (!COUNTER_PAYMENTS.includes(payment)) return { error: "Elige la forma de pago." };
+
+  const { data, error } = await adminDb().rpc("create_order", {
+    p_customer_name: text(fd, "name") || "Cliente de mostrador",
+    p_phone: phone,
+    p_email: null,
+    p_delivery: "recoger",
+    p_branch_id: text(fd, "branch") || null,
+    p_address: null,
+    p_notes: text(fd, "notes") || null,
+    p_items: items.map((i) => ({ product_id: i.productId, quantity: i.quantity })),
+    p_channel: "tienda",
+    p_payment: payment,
+  });
   if (error) return { error: error.message };
   refresh();
-  return { ok: "Estado actualizado" };
+  return { orderId: data as number };
 }

@@ -105,7 +105,26 @@ export interface CartItem {
   quantity: number;
 }
 
-export type OrderStatus = "nuevo" | "confirmado" | "entregado" | "cancelado";
+export type OrderStatus = "nuevo" | "confirmado" | "preparando" | "listo" | "entregado" | "cancelado";
+
+/** en_linea = pedido desde la tienda web · tienda = venta en mostrador */
+export type OrderChannel = "en_linea" | "tienda";
+/**
+ * en_linea = pagó con tarjeta en la página · en_sucursal = pagará al recoger
+ * (al cobrar se cambia por efectivo o tarjeta)
+ */
+export type PaymentMethod = "efectivo" | "tarjeta" | "transferencia" | "en_sucursal" | "en_linea";
+/** pendiente → por_confirmar (el cliente avisó que pagó) → pagado */
+export type PaymentStatus = "pendiente" | "por_confirmar" | "pagado";
+
+export interface OrderEvent {
+  status: OrderStatus;
+  note: string | null;
+  actor: "tienda" | "cliente";
+  /** estado = cambio de estado del pedido · pago = movimiento del pago */
+  kind: "estado" | "pago";
+  createdAt: string;
+}
 
 export interface OrderItem {
   productId: string | null;
@@ -125,7 +144,16 @@ export interface Order {
   address: string | null;
   notes: string | null;
   status: OrderStatus;
+  channel: OrderChannel;
+  paymentMethod: PaymentMethod | null;
+  paymentStatus: PaymentStatus;
+  paidAt: string | null;
+  /** Referencia del cobro en línea (ej. "PRUEBA-8K2J4Q · Visa •••• 4242") */
+  paymentRef: string | null;
+  trackingToken: string;
   total: number;
   createdAt: string;
   items: OrderItem[];
+  /** Historial, del más antiguo al más reciente (solo cuando se pide) */
+  events: OrderEvent[];
 }

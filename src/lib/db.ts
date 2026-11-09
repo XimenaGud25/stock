@@ -87,9 +87,16 @@ type OrderRow = {
   address: string | null;
   notes: string | null;
   status: Order["status"];
+  channel?: Order["channel"];
+  payment_method?: Order["paymentMethod"];
+  payment_status?: Order["paymentStatus"];
+  paid_at?: string | null;
+  payment_ref?: string | null;
+  tracking_token?: string;
   total: number | string;
   created_at: string;
   order_items?: { product_id: string | null; name: string; brand: string; price: number | string; quantity: number }[];
+  order_events?: { status: Order["status"]; note: string | null; actor: "tienda" | "cliente"; kind?: "estado" | "pago"; created_at: string }[];
 };
 
 export function rowToOrder(r: OrderRow): Order {
@@ -103,6 +110,12 @@ export function rowToOrder(r: OrderRow): Order {
     address: r.address,
     notes: r.notes,
     status: r.status,
+    channel: r.channel ?? "en_linea",
+    paymentMethod: r.payment_method ?? null,
+    paymentStatus: r.payment_status ?? "pendiente",
+    paidAt: r.paid_at ?? null,
+    paymentRef: r.payment_ref ?? null,
+    trackingToken: r.tracking_token ?? "",
     total: Number(r.total),
     createdAt: r.created_at,
     items: (r.order_items ?? []).map((i) => ({
@@ -112,6 +125,9 @@ export function rowToOrder(r: OrderRow): Order {
       price: Number(i.price),
       quantity: i.quantity,
     })),
+    events: (r.order_events ?? [])
+      .map((e) => ({ status: e.status, note: e.note, actor: e.actor, kind: e.kind ?? "estado", createdAt: e.created_at }))
+      .sort((a, b) => a.createdAt.localeCompare(b.createdAt)),
   };
 }
 

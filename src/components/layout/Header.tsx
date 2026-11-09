@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Search, ShoppingCart, User } from "lucide-react";
+import { PackageSearch, Search, ShoppingCart } from "lucide-react";
 import { Logo } from "./Logo";
 import { useCart } from "@/components/cart/CartProvider";
 import { cn, formatPrice } from "@/lib/format";
@@ -68,10 +68,14 @@ export function Header() {
             </label>
           </form>
           <Link
-            href="#"
-            className="hidden h-[52px] items-center gap-2.5 rounded-2xl border border-line px-4 text-[15px] font-medium hover:bg-surface md:flex"
+            href="/seguimiento"
+            className={cn(
+              "flex h-[52px] items-center gap-2.5 rounded-2xl border border-line px-4 text-[15px] font-medium hover:bg-surface",
+              pathname.startsWith("/seguimiento") && "border-brand text-brand",
+            )}
+            aria-label="Mi pedido"
           >
-            <User className="size-5" /> Mi cuenta
+            <PackageSearch className="size-5" /> <span className="hidden md:inline">Mi pedido</span>
           </Link>
           <button
             type="button"

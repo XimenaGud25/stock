@@ -1,6 +1,7 @@
 import Link from "next/link";
-import type { OrderStatus } from "@/types";
+import type { Order, OrderChannel, OrderStatus, PaymentStatus } from "@/types";
 import { cn } from "@/lib/format";
+import { CHANNEL_LABEL, PAYMENT_STATUS_LABEL, statusLabel } from "@/lib/orders";
 
 /** Piezas visuales compartidas por las pantallas del panel. */
 
@@ -40,13 +41,42 @@ export function ButtonLink({ href, children, variant = "primary" }: { href: stri
 export const ORDER_STATUS: Record<OrderStatus, { label: string; className: string }> = {
   nuevo: { label: "Nuevo", className: "bg-accent/25 text-[#8a5a00]" },
   confirmado: { label: "Confirmado", className: "bg-brand-soft text-brand" },
+  preparando: { label: "Preparando", className: "bg-[#efe9ff] text-[#5b3cc4]" },
+  listo: { label: "Listo / En camino", className: "bg-[#e3f4fb] text-[#0b6e99]" },
   entregado: { label: "Entregado", className: "bg-ok-soft text-ok" },
   cancelado: { label: "Cancelado", className: "bg-danger-soft text-danger" },
 };
 
-export function StatusPill({ status }: { status: OrderStatus }) {
+export function StatusPill({ status, delivery }: { status: OrderStatus; delivery?: Order["delivery"] }) {
   const s = ORDER_STATUS[status];
-  return <span className={cn("rounded-full px-3 py-1 text-[13px] font-bold", s.className)}>{s.label}</span>;
+  const label = status === "nuevo" ? s.label : statusLabel(status, delivery);
+  return <span className={cn("whitespace-nowrap rounded-full px-3 py-1 text-[13px] font-bold", s.className)}>{label}</span>;
+}
+
+const PAYMENT_PILL: Record<PaymentStatus, string> = {
+  pendiente: "bg-surface text-muted ring-1 ring-line",
+  por_confirmar: "bg-accent/25 text-[#8a5a00]",
+  pagado: "bg-ok-soft text-ok",
+};
+
+export function PaymentPill({ status }: { status: PaymentStatus }) {
+  return (
+    <span className={cn("whitespace-nowrap rounded-full px-3 py-1 text-[13px] font-bold", PAYMENT_PILL[status])}>
+      {status === "pagado" ? "✓ Pagado" : PAYMENT_STATUS_LABEL[status]}
+    </span>
+  );
+}
+
+/** Colores de canal: los mismos que usan las gráficas de Reportes. */
+export const CHANNEL_COLOR: Record<OrderChannel, string> = { en_linea: "#1f4fd8", tienda: "#d97706" };
+
+export function ChannelPill({ channel }: { channel: OrderChannel }) {
+  return (
+    <span className="inline-flex items-center gap-1.5 whitespace-nowrap text-sm font-medium text-muted">
+      <span className="size-2.5 rounded-full" style={{ background: CHANNEL_COLOR[channel] }} aria-hidden />
+      {CHANNEL_LABEL[channel]}
+    </span>
+  );
 }
 
 export function StockPill({ stock, threshold = 3 }: { stock: number; threshold?: number }) {

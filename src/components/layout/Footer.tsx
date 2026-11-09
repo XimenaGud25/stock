@@ -25,6 +25,7 @@ const columns = [
   {
     title: "Ayuda",
     links: [
+      { label: "Rastrear mi pedido", href: "/seguimiento" },
       { label: "Envíos", href: "#" },
       { label: "Facturación", href: "#" },
       { label: "Garantías", href: "#" },

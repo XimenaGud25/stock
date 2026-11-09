@@ -1,5 +1,6 @@
+import Image from "next/image";
 import Link from "next/link";
-import { ArrowRight, Disc3, Drill } from "lucide-react";
+import { ArrowRight, Disc3 } from "lucide-react";
 import type { Product } from "@/types";
 import { Container } from "@/components/layout/Container";
 import { discountPercent, formatPrice } from "@/lib/format";
@@ -50,10 +51,15 @@ export function Hero({ deal, productCount }: { deal?: Product; productCount: num
           </dl>
         </div>
 
-        {/* Reemplaza este bloque por una foto real (next/image) cuando la tengas */}
-        <div className="relative aspect-[32/27] overflow-hidden rounded-[28px] bg-gradient-to-b from-white to-[#e3eafb]">
-          <div className="absolute left-1/2 top-[8%] aspect-square w-[62%] -translate-x-1/2 rounded-full bg-accent/25" />
-          <Drill strokeWidth={1.1} className="absolute left-1/2 top-[14%] size-[40%] -translate-x-1/2 text-navy" />
+        <div className="relative aspect-[32/27] overflow-hidden rounded-[28px] bg-[#2b2b2b]">
+          <Image
+            src="/hero-herramientas.png"
+            alt="Hidrolavadora y generador Honda, rotomartillo Makita y demoledor Hilti"
+            fill
+            priority
+            sizes="(min-width: 1024px) 45vw, 100vw"
+            className="object-cover"
+          />
           {deal && (
             <Link
               href={`/producto/${deal.slug}`}
